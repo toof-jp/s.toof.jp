@@ -34,4 +34,8 @@ cd
 # change default shell
 chsh -s /usr/bin/zsh
 
+# tailscale
+sudo systemctl enable --now tailscaled
+sudo tailscale up
+
 set +x
