@@ -1,112 +1,125 @@
-#!/usr/bin/env python3
-"""
-build.py – Build helper for Cloudflare Pages
-
-• Generates an `_headers` file that makes every non-HTML asset return
-  `Content-Type: text/plain; charset=utf-8`.
-• Recursively writes a minimalist directory listing (`index.html`) in
-  each folder, skipping `.git/`.
-
-Run:
-    python build.py [ROOT]
-
-If ROOT is omitted the current directory is used.
-"""
-
 import os
 import sys
-import html
-from pathlib import Path
-from datetime import datetime
 
-# --------------------------------------------------------------------------- #
-# Configuration
-# --------------------------------------------------------------------------- #
+# --- Configuration ---
+# Default directory to scan for files and where _headers will be created.
+# This can be overridden by a command-line argument.
+# For Cloudflare Pages, if your site output is in a directory like 'public' or 'dist',
+# you might run this script from the repo root like: python build.py public
+DEFAULT_TARGET_DIRECTORY = "."
+HEADERS_FILE_NAME = "_headers"  # Name of the headers file Cloudflare Pages uses.
+EXCLUDED_DIRS = {".git"}      # Directories to completely exclude from scanning.
+# Add other directories like 'node_modules' if needed: {".git", "node_modules"}
 
-HEADERS_CONTENT = """\
-/*
-  Content-Type: text/plain; charset=utf-8
+def generate_headers_content(target_dir):
+    """
+    Scans the target_dir, identifies non-HTML files, and generates
+    the content for the _headers file.
+    Specified directories (like .git) and this build script itself (if inside target_dir) are excluded.
 
-/*.html
-  ! Content-Type
-  Content-Type: text/html; charset=utf-8
-"""
+    Args:
+        target_dir (str): The directory to scan.
 
-SKIP_DIRS = {".git"}          # add "__pycache__", ".venv", … if needed
-SKIP_FILES = {"index.html", "_headers"}
+    Returns:
+        str: The content for the _headers file.
+    """
+    headers_rules = []
+    script_full_path = os.path.realpath(__file__)
+    target_full_path = os.path.realpath(target_dir)
 
-# --------------------------------------------------------------------------- #
-# Helpers
-# --------------------------------------------------------------------------- #
+    # Walk through the directory
+    for root, dirs, files in os.walk(target_dir, topdown=True):
+        # Filter out excluded directories from further traversal
+        # To make sure we're comparing apples to apples, normalize paths before comparison.
+        dirs[:] = [
+            d for d in dirs
+            if d not in EXCLUDED_DIRS
+        ]
 
-def write_headers_file(root: Path) -> None:
-    """Create or overwrite the _headers file in ROOT."""
-    (root / "_headers").write_text(HEADERS_CONTENT, encoding="utf-8")
-    print("· _headers file written")
+        for file_name in files:
+            full_file_path = os.path.join(root, file_name)
+            full_file_path_real = os.path.realpath(full_file_path)
 
+            # Skip the build script itself
+            if full_file_path_real == script_full_path:
+                continue
 
-def generate_index(dirpath: Path, root: Path) -> None:
-    """Write index.html for a single directory."""
-    rel = os.path.relpath(dirpath, root)
-    title = "/" if rel == "." else rel
+            # Skip the _headers file itself from being listed
+            if file_name == HEADERS_FILE_NAME and os.path.realpath(os.path.dirname(full_file_path)) == target_full_path :
+                continue
 
-    # Collect entries (dirs first, then files) and sort them case-insensitively.
-    dirs = [d for d in dirpath.iterdir() if d.is_dir() and d.name not in SKIP_DIRS]
-    files = [f for f in dirpath.iterdir() if f.is_file() and f.name not in SKIP_FILES]
-    entries = sorted(dirs, key=lambda p: p.name.lower()) + \
-              sorted(files, key=lambda p: p.name.lower())
+            # Get the file path relative to the target_dir for URL generation
+            relative_file_path = os.path.relpath(full_file_path, target_dir)
 
-    out = dirpath / "index.html"
-    with out.open("w", encoding="utf-8") as f:
-        f.write(
-            "<!DOCTYPE html><html lang='en'>"
-            "<head><meta charset='utf-8'>"
-            f"<title>Index of {html.escape(title)}</title>"
-            "<style>"
-            "body{font-family:sans-serif;margin:2rem}"
-            "ul{list-style:none;padding:0}"
-            "li{margin:.2rem 0}"
-            "a{text-decoration:none;color:#0366d6}"
-            "</style></head><body>"
-            f"<h1>Index of {html.escape(title)}</h1><ul>"
-        )
+            # Ensure URL paths use forward slashes, as expected by web servers and _headers
+            url_path = "/" + relative_file_path.replace(os.sep, "/")
 
-        for p in entries:
-            name = html.escape(p.name)
-            if p.is_dir():
-                f.write(f"<li><a href='{name}/index.html'>{name}/</a></li>")
-            else:
-                f.write(f"<li><a href='{name}'>{name}</a></li>")
+            # Get the file extension
+            _, file_extension = os.path.splitext(file_name)
+            file_extension = file_extension.lower() # Normalize to lowercase
 
-        f.write(
-            "</ul>"
-            f"<p style='color:#888;font-size:.8rem'>"
-            f"Generated {datetime.utcnow():%Y-%m-%d %H:%M UTC}</p>"
-            "</body></html>"
-        )
+            # Check if the file is not an HTML file
+            if file_extension not in [".html", ".htm"]:
+                # Add a rule to set Content-Type to text/plain
+                rule = (
+                    f"{url_path}\n"
+                    f"  Content-Type: text/plain"
+                )
+                headers_rules.append(rule)
 
+    if not headers_rules:
+        return "# No custom header rules generated. All files might be HTML, or no applicable files found."
+    
+    # Join rules with two newlines for better readability in the _headers file
+    return "\n\n".join(headers_rules)
 
-def generate_all_indexes(root: Path) -> None:
-    """Walk ROOT recursively, skipping SKIP_DIRS, and write index.html files."""
-    for dirpath, dirnames, _ in os.walk(root, topdown=True):
-        # prune directories we do not want to descend into
-        dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
-        generate_index(Path(dirpath), root)
-    print("· index.html files generated")
+def write_headers_file(content, target_dir):
+    """
+    Writes the generated content to the _headers file in the target_dir.
 
+    Args:
+        content (str): The content to write to the _headers file.
+        target_dir (str): The directory where _headers file will be created.
+    """
+    headers_file_path = os.path.join(target_dir, HEADERS_FILE_NAME)
+    try:
+        with open(headers_file_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        print(f"Successfully created/updated {headers_file_path}")
+    except IOError as e:
+        print(f"Error writing {headers_file_path}: {e}")
+        sys.exit(1) # Exit if we can't write the file
 
-# --------------------------------------------------------------------------- #
-# Main
-# --------------------------------------------------------------------------- #
+def main():
+    """
+    Main function to orchestrate the generation and writing of the _headers file.
+    The target directory can be specified as a command-line argument.
+    """
+    # Determine the target directory: use command-line argument if provided, else default.
+    if len(sys.argv) > 1:
+        target_directory = sys.argv[1]
+    else:
+        target_directory = DEFAULT_TARGET_DIRECTORY
 
-def main() -> None:
-    root = Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
-    if not root.is_dir():
-        sys.exit(f"Error: {root} is not a directory")
+    # Validate if the target directory exists
+    if not os.path.isdir(target_directory):
+        print(f"Error: Target directory '{target_directory}' does not exist or is not a directory.")
+        print("Please specify a valid directory as a command-line argument or ensure the default directory exists.")
+        sys.exit(1) # Exit if the directory is invalid
 
-    write_headers_file(root)
-    generate_all_indexes(root)
-    print(f"Done – site built at {root}")
+    print(f"Starting build process to generate {HEADERS_FILE_NAME} in '{os.path.abspath(target_directory)}'...")
+    print(f"Scanning directory: {os.path.abspath(target_directory)}")
+    print(f"Excluding directories named: {EXCLUDED_DIRS}")
+    print(f"Excluding build script: {os.path.basename(__file__)}")
+
+    # Generate the content for the _headers file
+    headers_content = generate_headers_content(target_directory)
+    
+    # Write the content to the _headers file
+    write_headers_file(headers_content, target_directory)
+
+    print("Build process finished.")
 
 if __name__ == "__main__":
+    # This allows the script to be run directly.
     main()
