@@ -23,9 +23,9 @@ sudo pacman -S --needed ghq
 ghq clone https://github.com/toof-jp/dotfiles.git
 cd ~/ghq/github.com/toof-jp/dotfiles
 make
+cd
 
 # pacman package
-cd
 ghq clone git@github.com:toof-jp/pacman-package-list.git
 cd ~/ghq/github.com/toof-jp/pacman-package-list
 ./install.sh
