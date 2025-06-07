@@ -14,8 +14,7 @@ ssh-keygen -f ~/.ssh/id_ed25519 -t ed25519 -C "toof@toof.jp"
 
 # upload public key
 sudo pacman -S --needed github-cli
-gh auth login --git-protocol ssh --skip-ssh-key
-gh ssh-key add ~/.ssh/id_ed25519.pub --title "$(hostnamectl hostname)"
+gh auth login --git-protocol ssh
 
 # ghq
 sudo pacman -S --needed ghq
