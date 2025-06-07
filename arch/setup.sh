@@ -27,7 +27,7 @@ make
 # pacman package
 cd
 ghq clone git@github.com:toof-jp/pacman-package-list.git
-cd pacman-package-list
+cd ~/ghq/github.com/toof-jp/pacman-package-list
 ./install.sh
 cd
 
