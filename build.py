@@ -6,15 +6,15 @@ import sys
 # This can be overridden by a command-line argument.
 DEFAULT_TARGET_DIRECTORY = "."
 HEADERS_FILE_NAME = "_headers"  # Name of the headers file Cloudflare Pages uses.
+INDEX_FILE_NAMES = {"index.html", "index.htm"} # Common names for index files
 EXCLUDED_DIRS = {".git"}      # Directories to completely exclude from scanning.
 # Add other directories like 'node_modules' if needed: {".git", "node_modules"}
 
 def generate_headers_content(target_dir):
     """
-    Scans the target_dir, identifies files, and generates
-    the content for the _headers file.
-    HTML files will have Content-Type: text/html.
-    Other files will have Content-Type: text/plain.
+    Scans the target_dir and generates the content for the _headers file.
+    Files named 'index.html' or 'index.htm' will have Content-Type: text/html.
+    All other files will have Content-Type: text/plain.
     Specified directories (like .git) and this build script itself (if inside target_dir) are excluded.
 
     Args:
@@ -53,13 +53,9 @@ def generate_headers_content(target_dir):
             # Ensure URL paths use forward slashes, as expected by web servers and _headers
             url_path = "/" + relative_file_path.replace(os.sep, "/")
 
-            # Get the file extension
-            _, file_extension = os.path.splitext(file_name)
-            file_extension = file_extension.lower() # Normalize to lowercase
-
             rule_content_type = ""
-            # Set Content-Type based on file extension
-            if file_extension in [".html", ".htm"]:
+            # Set Content-Type based on file name
+            if file_name.lower() in INDEX_FILE_NAMES: # Check if it's an index file (case-insensitive)
                 rule_content_type = "text/html"
             else:
                 # For all other files, set Content-Type to text/plain
@@ -115,6 +111,7 @@ def main():
     print(f"Starting build process to generate {HEADERS_FILE_NAME} in '{os.path.abspath(target_directory)}'...")
     print(f"Scanning directory: {os.path.abspath(target_directory)}")
     print(f"Excluding directories named: {EXCLUDED_DIRS}")
+    print(f"Index file names considered for text/html: {INDEX_FILE_NAMES}")
     print(f"Excluding build script: {os.path.basename(__file__)}")
 
     # Generate the content for the _headers file
