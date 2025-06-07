@@ -38,4 +38,7 @@ chsh -s /usr/bin/zsh
 sudo systemctl enable --now tailscaled
 sudo tailscale up
 
+# docker
+sudo systemctl enable --now docker
+
 set +x
