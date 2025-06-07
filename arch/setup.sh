@@ -10,7 +10,7 @@ makepkg -si
 cd
 
 # ssh key
-ssh-keygen -t ed25519 -C "toof@toof.jp"
+ssh-keygen -f ~/.ssh/id_ed25519 -t ed25519 -C "toof@toof.jp"
 sudo pacman -S --needed github-cli
 gh auth login
 gh ssh-key add ~/.ssh/id_ed25519.pub --title "$(hostname)"
