@@ -34,11 +34,11 @@ cd
 # change default shell
 chsh -s /usr/bin/zsh
 
+# docker
+sudo systemctl enable --now docker
+
 # tailscale
 sudo systemctl enable --now tailscaled
 sudo tailscale up
-
-# docker
-sudo systemctl enable --now docker
 
 set +x
