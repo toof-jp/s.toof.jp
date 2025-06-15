@@ -31,6 +31,9 @@ cd ~/ghq/github.com/toof-jp/pacman-package-list
 ./install.sh
 cd
 
+# docker
+sudo usermod -aG docker $USER
+
 # change default shell
 chsh -s /usr/bin/zsh
 
