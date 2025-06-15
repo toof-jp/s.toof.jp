@@ -33,6 +33,7 @@ cd
 
 # docker
 sudo usermod -aG docker $USER
+newgrp docker
 
 # change default shell
 chsh -s /usr/bin/zsh
