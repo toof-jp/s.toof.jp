@@ -39,6 +39,7 @@ chsh -s /usr/bin/zsh
 
 # docker
 sudo systemctl enable --now docker
+https://github.com/toof-jp/s.toof.jp
 
 # tailscale
 sudo systemctl enable --now tailscaled
