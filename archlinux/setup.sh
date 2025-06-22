@@ -20,7 +20,7 @@ gh auth login --git-protocol ssh
 sudo pacman -S --needed ghq
 
 # dotfiles
-ghq clone https://github.com/toof-jp/dotfiles.git
+ghq clone git@github.com:toof-jp/dotfiles.git
 cd ~/ghq/github.com/toof-jp/dotfiles
 make
 cd
@@ -28,7 +28,7 @@ cd
 # pacman package
 ghq clone git@github.com:toof-jp/pacman-package-list.git
 cd ~/ghq/github.com/toof-jp/pacman-package-list
-./install.sh
+sh install.sh
 cd
 
 # docker
@@ -40,7 +40,6 @@ chsh -s /usr/bin/zsh
 
 # docker
 sudo systemctl enable --now docker
-https://github.com/toof-jp/s.toof.jp
 
 # tailscale
 sudo systemctl enable --now tailscaled
