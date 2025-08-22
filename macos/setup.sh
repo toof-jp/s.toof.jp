@@ -6,6 +6,9 @@ defaults write -g ApplePressAndHoldEnabled -bool false
 # generate ssh key
 ssh-keygen -f ~/.ssh/id_ed25519 -t ed25519 -C "toof@toof.jp"
 
+brew install gh
+brew install ghq
+
 # upload public key
 gh auth login --git-protocol ssh
 
