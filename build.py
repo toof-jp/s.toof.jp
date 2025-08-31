@@ -117,6 +117,7 @@ def generate_index_html_for_directory(current_dir_path, root_output_dir):
     html_content += f"""
     <footer>
         <p>This index was automatically generated on {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")}.</p>
+        <p>Repository: <a href="https://github.com/toof-jp/s.toof.jp">https://github.com/toof-jp/s.toof.jp</a></p>
     </footer>
 </body>
 </html>
