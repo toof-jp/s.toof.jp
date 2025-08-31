@@ -25,7 +25,7 @@ cd ~/ghq/github.com/toof-jp/dotfiles
 make
 cd
 
-# pacman package
+# pacman package (private repository)
 ghq clone git@github.com:toof-jp/pacman-package-list.git
 cd ~/ghq/github.com/toof-jp/pacman-package-list
 sh install.sh
